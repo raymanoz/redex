@@ -1,0 +1,43 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.4.10"
+}
+
+group = "com.raymanoz"
+version(hasProperty("-version") ? property("-version") : "SNAPSHOT")
+
+println "building version ${version}"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'com.microsoft.sqlserver:mssql-jdbc:8.4.1.jre11'
+    implementation 'com.microsoft.sqlserver:mssql-jdbc_auth:8.4.1.x64'
+    implementation 'org.apache.poi:poi-ooxml:3.17'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2'
+
+    def junitJupiterVersion = "5.6.2"
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+    testImplementation("com.natpryce:hamkrest:1.7.0.3")
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes "Main-Class": "com.raymanoz.redex.MainKt"
+    }
+
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+
+    from {
+        configurations.compileClasspath.filter {
+            File f -> !f.name.toLowerCase().endsWith(".dll")
+        }.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+}
