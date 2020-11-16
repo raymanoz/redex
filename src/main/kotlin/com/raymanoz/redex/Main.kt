@@ -5,13 +5,13 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.apache.poi.ss.usermodel.CellStyle
 import org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND
+import org.apache.poi.ss.usermodel.Font
 import org.apache.poi.ss.usermodel.IndexedColors
 import org.apache.poi.ss.usermodel.IndexedColors.GREY_25_PERCENT
 import org.apache.poi.ss.usermodel.IndexedColors.PALE_BLUE
-import org.apache.poi.xssf.usermodel.XSSFCellStyle
-import org.apache.poi.xssf.usermodel.XSSFFont
-import org.apache.poi.xssf.usermodel.XSSFSheet
-import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.ss.usermodel.Workbook
+import org.apache.poi.xssf.streaming.SXSSFWorkbook
 import java.io.File
 import java.io.FileOutputStream
 import java.sql.Connection
@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
 
     val configuration = jacksonObjectMapper().readValue<Database>(File(configFile))
 
-    XSSFWorkbook().use { workbook ->
+    SXSSFWorkbook().use { workbook ->
         val cellStyles = CellStyles(workbook)
 
         DriverManager.getConnection(configuration.jdbcUrl).use { connection ->
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
 
         val outputFile = "${outputDir}/${configuration.name}.xlsx"
         println("writing $outputFile")
-        FileOutputStream("$outputFile").use {
+        FileOutputStream(outputFile).use {
             workbook.write(it)
         }
     }
@@ -51,7 +51,7 @@ private fun usage() {
     exitProcess(1)
 }
 
-private fun export(connection: Connection, table: Table, workbook: XSSFWorkbook, cellStyles: CellStyles) {
+private fun export(connection: Connection, table: Table, workbook: Workbook, cellStyles: CellStyles) {
     connection.prepareStatement("select * from ${table.name}").use { statement ->
         print("${table.name} ")
         val sheet = workbook.createSheet(table.name)
@@ -69,7 +69,7 @@ private fun export(connection: Connection, table: Table, workbook: XSSFWorkbook,
     }
 }
 
-private fun createValueRow(sheet: XSSFSheet, resultSet: ResultSet, columnCount: Int, table: Table, cellStyles: CellStyles) {
+private fun createValueRow(sheet: Sheet, resultSet: ResultSet, columnCount: Int, table: Table, cellStyles: CellStyles) {
     val row = sheet.createRow(resultSet.row)
     for (columnIndex in 1..columnCount) {
         val cell = row.createCell(columnIndex - 1)
@@ -83,7 +83,7 @@ private fun createValueRow(sheet: XSSFSheet, resultSet: ResultSet, columnCount: 
     }
 }
 
-private fun createHeaderRow(columnCount: Int, sheet: XSSFSheet, resultSet: ResultSet, cellStyles: CellStyles) {
+private fun createHeaderRow(columnCount: Int, sheet: Sheet, resultSet: ResultSet, cellStyles: CellStyles) {
     val row = sheet.createRow(0)
     for (columnIndex in 0 until columnCount) {
         val cell = row.createCell(columnIndex)
@@ -92,9 +92,9 @@ private fun createHeaderRow(columnCount: Int, sheet: XSSFSheet, resultSet: Resul
     }
 }
 
-private class CellStyles(workbook: XSSFWorkbook,
-                 val header: XSSFCellStyle = workbook.createCellStyle(),
-                 val redacted: XSSFCellStyle = workbook.createCellStyle()
+private class CellStyles(workbook: Workbook,
+                 val header: CellStyle = workbook.createCellStyle(),
+                 val redacted: CellStyle = workbook.createCellStyle()
 ) {
     init {
         val headerFont = workbook.createFont()
@@ -106,7 +106,7 @@ private class CellStyles(workbook: XSSFWorkbook,
         redacted.setFontAndFillColor(redactedFont, GREY_25_PERCENT)
     }
 
-    private fun CellStyle.setFontAndFillColor(font: XSSFFont, colour: IndexedColors) {
+    private fun CellStyle.setFontAndFillColor(font: Font, colour: IndexedColors) {
         this.setFont(font)
         this.setFillPattern(SOLID_FOREGROUND)
         this.fillForegroundColor = colour.index
