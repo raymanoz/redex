@@ -13,7 +13,7 @@ Create a json config file containing the tables, and field fields that you would
 ```json
 { "name": "myDatabase",
   "jdbcUrl": "jdbc:sqlserver://SomeServer:50435;databaseName=myDB;integratedSecurity=true",
-  "tables": [
+  "data": [
     {"name":  "People",
      "query": "select top 10 from those_people", 
      "redact": ["Surname", "PhoneNumber"]},
