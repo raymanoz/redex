@@ -15,14 +15,16 @@ Create a json config file containing the tables, and field fields that you would
   "jdbcUrl": "jdbc:sqlserver://SomeServer:50435;databaseName=myDB;integratedSecurity=true",
   "tables": [
     {"name":  "People",
+     "query": "select top 10 from those_people", 
      "redact": ["Surname", "PhoneNumber"]},
-    {"name":  "Places"}
+    {"name":  "Places",
+     "query":  "places"}
   ]
 }
 ```
 
-The above configuration will create a spreadsheet named `myDatabase.xlsx`, exporting `People` (2 fields redacted), 
-and `Places`.
+The above configuration will create a spreadsheet named `myDatabase.xlsx`, exporting the query for `People` (2 fields redacted), 
+and `Places`. The sheets in the workbook will be named the value you give `name`.
 
 ```
 $ redex.bat config.json c:/mydir
