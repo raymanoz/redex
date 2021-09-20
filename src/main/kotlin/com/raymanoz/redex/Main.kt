@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
 
         DriverManager.getConnection(configuration.jdbcUrl).use { connection ->
             println("Exporting data")
-            configuration.tables.forEach { table ->
+            configuration.data.forEach { table ->
                 export(connection, table, workbook, cellStyles)
             }
         }
@@ -51,17 +51,18 @@ private fun usage() {
     exitProcess(1)
 }
 
-private fun export(connection: Connection, table: Table, workbook: Workbook, cellStyles: CellStyles) {
-    connection.prepareStatement("select * from ${table.name}").use { statement ->
-        print("${table.name} ")
-        val sheet = workbook.createSheet(table.name)
+private fun export(connection: Connection, data: Data, workbook: Workbook, cellStyles: CellStyles) {
+    val sql = if (data.query.startsWith("select", true)) data.query else "select * from ${data.query}"
+    connection.prepareStatement(sql).use { statement ->
+        print("${data.name} ")
+        val sheet = workbook.createSheet(data.name)
 
         statement.executeQuery().use { resultSet ->
             val columnCount = resultSet.metaData.columnCount
             createHeaderRow(columnCount, sheet, resultSet, cellStyles)
 
             while (resultSet.next()) {
-                createValueRow(sheet, resultSet, columnCount, table, cellStyles)
+                createValueRow(sheet, resultSet, columnCount, data, cellStyles)
                 if (resultSet.row % 1000 == 0) print(".")
             }
             println()
@@ -69,13 +70,13 @@ private fun export(connection: Connection, table: Table, workbook: Workbook, cel
     }
 }
 
-private fun createValueRow(sheet: Sheet, resultSet: ResultSet, columnCount: Int, table: Table, cellStyles: CellStyles) {
+private fun createValueRow(sheet: Sheet, resultSet: ResultSet, columnCount: Int, data: Data, cellStyles: CellStyles) {
     val row = sheet.createRow(resultSet.row)
     for (columnIndex in 1..columnCount) {
         val cell = row.createCell(columnIndex - 1)
 
         val columnName = resultSet.metaData.getColumnName(columnIndex)
-        val value = if (columnName.isIn(table.redact)) {
+        val value = if (columnName.isIn(data.redact)) {
             cell.cellStyle = cellStyles.redacted
             "** Redacted **"
         } else resultSet.getString(columnIndex)
@@ -113,9 +114,9 @@ private class CellStyles(workbook: Workbook,
     }
 }
 
-private data class Database(@JsonProperty("name") val name: String, @JsonProperty("jdbcUrl") val jdbcUrl: String, @JsonProperty("tables") val tables: Array<Table>)
+private data class Database(@JsonProperty("name") val name: String, @JsonProperty("jdbcUrl") val jdbcUrl: String, @JsonProperty("tables") val data: Array<Data>)
 
-private data class Table(@JsonProperty("name") val name: String, @JsonProperty("redact") val redact: Array<String> = emptyArray())
+private data class Data(@JsonProperty("name") val name: String, @JsonProperty("query") val query: String, @JsonProperty("redact") val redact: Array<String> = emptyArray())
 
 private fun String.isIn(values: Array<String>): Boolean = values.toList().contains(this)
 

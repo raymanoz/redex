@@ -1,5 +1,5 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.4.10"
+    id "org.jetbrains.kotlin.jvm" version "1.5.30"
 }
 
 group = "com.raymanoz"
@@ -14,6 +14,7 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.5.30"
     implementation 'com.microsoft.sqlserver:mssql-jdbc:8.4.1.jre11'
     implementation 'com.microsoft.sqlserver:mssql-jdbc_auth:8.4.1.x64'
     implementation 'org.apache.poi:poi-ooxml:3.17'
